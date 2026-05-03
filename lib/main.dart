@@ -1,4 +1,4 @@
-import 'package:demo2/money_share/money_share_page.dart';
+import 'package:demo2/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/adapters.dart';
 
@@ -12,7 +12,6 @@ void main() async {
   Hive.registerAdapter(NameModelAdapter());
   Hive.registerAdapter(MoneyModelAdapter());
   boxHive = await Hive.openBox('ShareMoney');
-  print('main- ${boxHive.values.length}');
   runApp(const MyApp());
 }
 
@@ -73,11 +72,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const MoneySharePage(),
+      home: const HomePage(),
     );
   }
 }
-
-// add test github 123
-
-// TEST GIT 2

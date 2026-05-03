@@ -86,7 +86,7 @@ class _MoneySharePageState extends State<MoneySharePage> {
         return ListView.separated(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
           itemCount: state.names.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          separatorBuilder: (_, index) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final data = state.names[index];
             return InkWell(
@@ -175,7 +175,7 @@ class _MoneySharePageState extends State<MoneySharePage> {
   }
 
   Widget _buildItem(NameModel data) {
-    final name = data.name ?? "";
+    final name = data.name;
     final incomeList =
         data.listMoney
             ?.where((e) => e.isCollected == true)
@@ -234,7 +234,11 @@ class _MoneySharePageState extends State<MoneySharePage> {
                   const SizedBox(height: 6),
                   _buildRowLabelValue("Khoan chi", expenseList),
                   const Divider(height: 18),
-                  _buildMoneyResult("Phai tra", formatCurrency(needToPay), Colors.red),
+                  _buildMoneyResult(
+                    "Phai tra",
+                    formatCurrency(needToPay),
+                    Colors.red,
+                  ),
                   const SizedBox(height: 4),
                   _buildMoneyResult(
                     "Nhan lai",
