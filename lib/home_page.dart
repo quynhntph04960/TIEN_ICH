@@ -1,6 +1,7 @@
 import 'package:demo2/calculator_page.dart';
 import 'package:demo2/money_share/money_share_page.dart';
 import 'package:demo2/money_share/page/list_group_page.dart';
+import 'package:demo2/sudoku/sudoku_page.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatelessWidget {
@@ -36,6 +37,18 @@ class HomePage extends StatelessWidget {
                 mainAxisSpacing: 12,
                 childAspectRatio: 1.05,
                 children: [
+                  _ModuleCard(
+                    title: "Sudoku",
+                    subtitle: "Game Sudoku",
+                    icon: Icons.gamepad,
+                    iconColor: const Color(0xFF2FED28),
+                    iconBackground: const Color(0xFFDBEAFE),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const SudokuPage()),
+                      );
+                    },
+                  ),
                   _ModuleCard(
                     title: "Chia tien",
                     subtitle: "Nhap khoan chi/thu theo thanh vien",
