@@ -9,7 +9,7 @@ class SudokuCubit extends Cubit<SudokuState> {
     List<List<SudokuItem>> list = [];
     for (int row = 1; row <= 9; row++) {
       final data = <SudokuItem>[];
-
+      List<int> numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
       for (int col = 1; col <= 9; col++) {
         int iRowCheck = 0;
 
