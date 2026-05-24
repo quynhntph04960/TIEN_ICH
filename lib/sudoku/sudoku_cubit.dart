@@ -1,99 +1,175 @@
-import 'package:bloc/bloc.dart';
+import 'dart:math';
+
 import 'package:demo2/sudoku/sudoku_item.dart';
 import 'package:demo2/sudoku/sudoku_state.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class SudokuCubit extends Cubit<SudokuState> {
-  SudokuCubit() : super(SudokuState());
+  SudokuCubit() : super(const SudokuState());
 
-  Future initialize() async {
-    List<List<SudokuItem>> list = [];
-    for (int row = 1; row <= 9; row++) {
-      final data = <SudokuItem>[];
-      List<int> numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-      for (int col = 1; col <= 9; col++) {
-        int iRowCheck = 0;
+  final Random _random = Random();
+  late List<List<int>> _solution;
+  late List<List<int>> _puzzle;
 
-        if (row >= 1 && row <= 3) {
-          /// ROW 1 2 3
-          if (col >= 1 && col <= 3) {
-            iRowCheck = 1;
-          } else if (col >= 4 && col <= 6) {
-            iRowCheck = 2;
-          } else {
-            iRowCheck = 3;
-          }
-        } else if (row >= 4 && row <= 6) {
-          /// ROW 4 5 6
-          if (col >= 1 && col <= 3) {
-            iRowCheck = 4;
-          } else if (col >= 4 && col <= 6) {
-            iRowCheck = 5;
-          } else {
-            iRowCheck = 6;
-          }
-        } else {
-          /// ROW 7 8 9
-          if (col >= 1 && col <= 3) {
-            iRowCheck = 7;
-          } else if (col >= 4 && col <= 6) {
-            iRowCheck = 8;
-          } else {
-            iRowCheck = 9;
-          }
-        }
-
-        int iColumnCheck = 0;
-        if (row == 1 || row == 4 || row == 7) {
-          if (col == 1 || col == 4 || col == 7) {
-            iColumnCheck = 1;
-          } else if (col == 2 || col == 5 || col == 8) {
-            iColumnCheck = 2;
-          } else {
-            iColumnCheck = 3;
-          }
-        } else if (row == 2 || row == 5 || row == 8) {
-          if (col == 1 || col == 4 || col == 7) {
-            iColumnCheck = 4;
-          } else if (col == 2 || col == 5 || col == 8) {
-            iColumnCheck = 5;
-          } else {
-            iColumnCheck = 6;
-          }
-        } else {
-          if (col == 1 || col == 4 || col == 7) {
-            iColumnCheck = 7;
-          } else if (col == 2 || col == 5 || col == 8) {
-            iColumnCheck = 8;
-          } else {
-            iColumnCheck = 9;
-          }
-        }
-        data.add(SudokuItem(row: iRowCheck, column: iColumnCheck, data: 0));
-      }
-
-      list.add(data);
-    }
-    emit(state.copyWith(list: list));
+  void initialize() {
+    newGame();
   }
 
-  void onClick(SudokuItem data) {
-    List<int> listRow = [];
-    List<int> listColumn = [];
+  void newGame() {
+    _solution = _createSolvedBoard();
+    _puzzle = _createPuzzle(_solution, hiddenCells: 45);
+    emit(
+      SudokuState(
+        list: _buildItems(_puzzle, _solution),
+        message: 'Đề mới đã sẵn sàng',
+      ),
+    );
+  }
 
-    for (int row = 0; row < state.list.length; row++) {
-      final listSub = state.list[row];
-      for (int col = 0; col < listSub.length; col++) {
-        final dataFor = listSub[col];
-        if (data.row == dataFor.row) {
-          listRow.add(dataFor.data);
-        }
-        if (data.column == dataFor.column) {
-          listColumn.add(dataFor.data);
-        }
+  void selectCell(SudokuItem item) {
+    emit(
+      state.copyWith(
+        selectedRow: item.row,
+        selectedColumn: item.column,
+        message: item.isFixed ? 'Ô này là số cố định' : '',
+      ),
+    );
+  }
+
+  void inputNumber(int number) {
+    final row = state.selectedRow;
+    final column = state.selectedColumn;
+    if (row == null || column == null || state.isCompleted) return;
+
+    final item = state.list[row][column];
+    if (item.isFixed) {
+      emit(state.copyWith(message: 'Không thể sửa số cố định'));
+      return;
+    }
+
+    _updateCell(row, column, number);
+  }
+
+  void clearSelectedCell() {
+    final row = state.selectedRow;
+    final column = state.selectedColumn;
+    if (row == null || column == null || state.isCompleted) return;
+
+    final item = state.list[row][column];
+    if (item.isFixed) return;
+
+    _updateCell(row, column, 0);
+  }
+
+  void revealHint() {
+    final row = state.selectedRow;
+    final column = state.selectedColumn;
+    if (row == null || column == null || state.isCompleted) return;
+
+    final item = state.list[row][column];
+    if (item.isFixed || item.data == item.answer) return;
+
+    final updated = _copyBoard();
+    updated[row][column] = item.copyWith(data: item.answer, isError: false);
+    emit(
+      state.copyWith(
+        list: updated,
+        hintsUsed: state.hintsUsed + 1,
+        isCompleted: _isBoardCompleted(updated),
+        message: 'Đã mở gợi ý',
+      ),
+    );
+  }
+
+  void _updateCell(int row, int column, int number) {
+    final item = state.list[row][column];
+    final hasError = number != 0 && number != item.answer;
+    final updated = _copyBoard();
+    updated[row][column] = item.copyWith(data: number, isError: hasError);
+    final completed = _isBoardCompleted(updated);
+
+    emit(
+      state.copyWith(
+        list: updated,
+        mistakes: hasError ? state.mistakes + 1 : state.mistakes,
+        isCompleted: completed,
+        message: completed
+            ? 'Hoàn thành Sudoku'
+            : hasError
+            ? 'Số này chưa đúng'
+            : '',
+      ),
+    );
+  }
+
+  List<List<SudokuItem>> _copyBoard() {
+    return state.list
+        .map((row) => row.map((item) => item.copyWith()).toList())
+        .toList();
+  }
+
+  bool _isBoardCompleted(List<List<SudokuItem>> board) {
+    for (final row in board) {
+      for (final item in row) {
+        if (item.data != item.answer) return false;
       }
     }
-    print('Position: ${data.row} - ${data.column}');
-    print('row: ${listRow.toString()}');
-    print('column: ${listColumn.toString()}');
+    return true;
+  }
+
+  List<List<SudokuItem>> _buildItems(
+    List<List<int>> puzzle,
+    List<List<int>> solution,
+  ) {
+    return List.generate(9, (row) {
+      return List.generate(9, (column) {
+        final value = puzzle[row][column];
+        return SudokuItem(
+          row: row,
+          column: column,
+          data: value,
+          answer: solution[row][column],
+          isFixed: value != 0,
+        );
+      });
+    });
+  }
+
+  List<List<int>> _createSolvedBoard() {
+    final rows = _shuffledGroups();
+    final columns = _shuffledGroups();
+    final numbers = List<int>.generate(9, (index) => index + 1)
+      ..shuffle(_random);
+
+    return List.generate(9, (row) {
+      return List.generate(9, (column) {
+        final pattern = (rows[row] * 3 + rows[row] ~/ 3 + columns[column]) % 9;
+        return numbers[pattern];
+      });
+    });
+  }
+
+  List<int> _shuffledGroups() {
+    final groups = [0, 1, 2]..shuffle(_random);
+    final result = <int>[];
+    for (final group in groups) {
+      final inner = [0, 1, 2]..shuffle(_random);
+      result.addAll(inner.map((value) => group * 3 + value));
+    }
+    return result;
+  }
+
+  List<List<int>> _createPuzzle(
+    List<List<int>> solved, {
+    required int hiddenCells,
+  }) {
+    final puzzle = solved.map((row) => List<int>.from(row)).toList();
+    final positions = List<int>.generate(81, (index) => index)
+      ..shuffle(_random);
+
+    for (final position in positions.take(hiddenCells)) {
+      puzzle[position ~/ 9][position % 9] = 0;
+    }
+    return puzzle;
   }
 }

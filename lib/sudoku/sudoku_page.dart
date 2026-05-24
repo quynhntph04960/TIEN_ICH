@@ -1,4 +1,5 @@
 import 'package:demo2/sudoku/sudoku_cubit.dart';
+import 'package:demo2/sudoku/sudoku_item.dart';
 import 'package:demo2/sudoku/sudoku_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -15,9 +16,14 @@ class _SudokuPageState extends State<SudokuPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     _cubit.initialize();
+  }
+
+  @override
+  void dispose() {
+    _cubit.close();
+    super.dispose();
   }
 
   @override
@@ -26,134 +32,305 @@ class _SudokuPageState extends State<SudokuPage> {
       bloc: _cubit,
       builder: (context, state) {
         return Scaffold(
-          appBar: AppBar(title: Text("Sudoku")),
-          body: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                margin: EdgeInsets.all(8),
-
-                decoration: BoxDecoration(
-                  border: Border.all(width: 1.1, color: Colors.black),
-                ),
-                child: GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
+          appBar: AppBar(title: const Text('Sudoku')),
+          body: SafeArea(
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                _Header(state: state, onNewGame: _cubit.newGame),
+                const SizedBox(height: 16),
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 460),
+                    child: _SudokuBoard(
+                      state: state,
+                      onCellTap: _cubit.selectCell,
+                    ),
                   ),
-                  shrinkWrap: true,
-                  itemCount: state.list.length,
-                  itemBuilder: (context, index) {
-                    final list = state.list[index];
-                    return Container(
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        border: Border.all(width: 1, color: Colors.black),
-                      ),
-                      child: GridView.builder(
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                            ),
-                        shrinkWrap: true,
-                        itemCount: list.length,
-                        itemBuilder: (context, subIndex) {
-                          final data = list[subIndex];
-                          return GestureDetector(
-                            onTap: () {
-                              _cubit.onClick(data);
-                            },
-                            child: Container(
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  width: 0.1,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  // Text(
-                                  //   "row:${data.row}",
-                                  //   style: TextStyle(fontSize: 10),
-                                  // ),
-                                  // Text(
-                                  //   "column:${data.column}",
-                                  //   style: TextStyle(fontSize: 10),
-                                  // ),
-                                  Text(
-                                    "${data.data}",
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  },
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 460),
+                    child: _NumberPad(
+                      onNumberTap: _cubit.inputNumber,
+                      onClear: _cubit.clearSelectedCell,
+                      onHint: _cubit.revealHint,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: state.message.isEmpty
+                      ? const SizedBox(height: 22)
+                      : Text(
+                          state.message,
+                          key: ValueKey(state.message),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: state.isCompleted
+                                ? const Color(0xFF0F766E)
+                                : const Color(0xFF64748B),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                ),
+              ],
+            ),
           ),
         );
       },
     );
   }
+}
 
-  BorderSide isBorderRight(int index) {
-    switch (index) {
-      case 2:
-      case 5:
-      case 11:
-      case 14:
-      case 20:
-      case 23:
-      case 29:
-      case 32:
-      case 38:
-      case 41:
-      case 47:
-      case 50:
-      case 56:
-      case 59:
-      case 65:
-      case 68:
-      case 74:
-      case 77:
-        return BorderSide(width: 1, color: Colors.black);
-    }
-    return BorderSide(width: 0.1, color: Colors.black);
+class _Header extends StatelessWidget {
+  const _Header({required this.state, required this.onNewGame});
+
+  final SudokuState state;
+  final VoidCallback onNewGame;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 460),
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDBEAFE),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.grid_4x4_rounded,
+                    color: Color(0xFF2563EB),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Game Sudoku',
+                        style: TextStyle(
+                          color: Color(0xFF0F172A),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Lỗi: ${state.mistakes}  |  Gợi ý: ${state.hintsUsed}',
+                        style: const TextStyle(
+                          color: Color(0xFF64748B),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton.filled(
+                  onPressed: onNewGame,
+                  tooltip: 'Ván mới',
+                  icon: const Icon(Icons.refresh_rounded),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SudokuBoard extends StatelessWidget {
+  const _SudokuBoard({required this.state, required this.onCellTap});
+
+  final SudokuState state;
+  final ValueChanged<SudokuItem> onCellTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 1,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: const Color(0xFF0F172A), width: 1.4),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: GridView.builder(
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 9,
+          ),
+          itemCount: 81,
+          itemBuilder: (context, index) {
+            final row = index ~/ 9;
+            final column = index % 9;
+            final item = state.list.isEmpty ? null : state.list[row][column];
+            if (item == null) return const SizedBox.shrink();
+
+            final selected =
+                state.selectedRow == row && state.selectedColumn == column;
+            final sameArea =
+                state.selectedRow == row ||
+                state.selectedColumn == column ||
+                _sameBlock(
+                  state.selectedRow,
+                  state.selectedColumn,
+                  row,
+                  column,
+                );
+
+            return _SudokuCell(
+              item: item,
+              selected: selected,
+              highlighted: sameArea,
+              onTap: () => onCellTap(item),
+            );
+          },
+        ),
+      ),
+    );
   }
 
-  BorderSide isBorderTop(int index) {
-    switch (index) {
-      case 27:
-      case 28:
-      case 29:
-      case 30:
-      case 31:
-      case 32:
-      case 33:
-      case 34:
-      case 35:
-      case 54:
-      case 55:
-      case 56:
-      case 57:
-      case 58:
-      case 59:
-      case 60:
-      case 61:
-      case 62:
-        return BorderSide(width: 1, color: Colors.black);
-    }
-    return BorderSide(width: 0.1, color: Colors.black);
+  bool _sameBlock(int? selectedRow, int? selectedColumn, int row, int column) {
+    if (selectedRow == null || selectedColumn == null) return false;
+    return selectedRow ~/ 3 == row ~/ 3 && selectedColumn ~/ 3 == column ~/ 3;
+  }
+}
+
+class _SudokuCell extends StatelessWidget {
+  const _SudokuCell({
+    required this.item,
+    required this.selected,
+    required this.highlighted,
+    required this.onTap,
+  });
+
+  final SudokuItem item;
+  final bool selected;
+  final bool highlighted;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = item.isFixed
+        ? const Color(0xFF0F172A)
+        : item.isError
+        ? const Color(0xFFDC2626)
+        : const Color(0xFF2563EB);
+
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: selected
+              ? const Color(0xFFBFDBFE)
+              : highlighted
+              ? const Color(0xFFEFF6FF)
+              : Colors.white,
+          border: Border(
+            right: BorderSide(
+              color: const Color(0xFF0F172A),
+              width: item.column == 2 || item.column == 5 ? 1.2 : 0.35,
+            ),
+            bottom: BorderSide(
+              color: const Color(0xFF0F172A),
+              width: item.row == 2 || item.row == 5 ? 1.2 : 0.35,
+            ),
+          ),
+        ),
+        child: Text(
+          item.data == 0 ? '' : '${item.data}',
+          style: TextStyle(
+            color: textColor,
+            fontSize: 20,
+            fontWeight: item.isFixed ? FontWeight.w800 : FontWeight.w700,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NumberPad extends StatelessWidget {
+  const _NumberPad({
+    required this.onNumberTap,
+    required this.onClear,
+    required this.onHint,
+  });
+
+  final ValueChanged<int> onNumberTap;
+  final VoidCallback onClear;
+  final VoidCallback onHint;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 9,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+          ),
+          itemCount: 9,
+          itemBuilder: (context, index) {
+            final number = index + 1;
+            return FilledButton(
+              onPressed: () => onNumberTap(number),
+              style: FilledButton.styleFrom(
+                padding: EdgeInsets.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                '$number',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: onClear,
+                icon: const Icon(Icons.backspace_outlined),
+                label: const Text('Xoá'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: onHint,
+                icon: const Icon(Icons.lightbulb_outline_rounded),
+                label: const Text('Gợi ý'),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 }
