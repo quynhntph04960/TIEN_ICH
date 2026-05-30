@@ -33,7 +33,7 @@ class SudokuCubit extends Cubit<SudokuState> {
       state.copyWith(
         selectedRow: item.row,
         selectedColumn: item.column,
-        message: item.isFixed ? 'Ô này là số cố định' : '',
+        message: item.isLocked ? 'Ô này không thể sửa' : '',
       ),
     );
   }
@@ -49,8 +49,8 @@ class SudokuCubit extends Cubit<SudokuState> {
     }
 
     final item = state.list[row][column];
-    if (item.isFixed) {
-      emit(state.copyWith(message: 'Không thể sửa số cố định'));
+    if (item.isLocked) {
+      emit(state.copyWith(message: 'Không thể sửa ô đã đúng'));
       return;
     }
 
@@ -68,7 +68,7 @@ class SudokuCubit extends Cubit<SudokuState> {
     }
 
     final item = state.list[row][column];
-    if (item.isFixed) return;
+    if (item.isLocked) return;
 
     _updateCell(row, column, 0);
   }
@@ -89,7 +89,7 @@ class SudokuCubit extends Cubit<SudokuState> {
     }
 
     final item = state.list[row][column];
-    if (item.isFixed || item.data == item.answer) return;
+    if (item.isLocked) return;
 
     final updated = _copyBoard();
     updated[row][column] = item.copyWith(data: item.answer, isError: false);

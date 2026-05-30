@@ -6,6 +6,9 @@ class SudokuItem {
   final bool isFixed;
   final bool isError;
 
+  bool get isCorrect => data != 0 && data == answer;
+  bool get isLocked => isFixed || isCorrect;
+
   const SudokuItem({
     required this.row,
     required this.column,
