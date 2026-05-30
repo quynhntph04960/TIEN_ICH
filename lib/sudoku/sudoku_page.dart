@@ -91,6 +91,7 @@ class _SudokuPageState extends State<SudokuPage> {
                     constraints: const BoxConstraints(maxWidth: 460),
                     child: _NumberPad(
                       enabled: canPlay,
+                      hintEnabled: canPlay && state.hintsUsed < 3,
                       onNumberTap: _cubit.inputNumber,
                       onClear: _cubit.clearSelectedCell,
                       onHint: _cubit.revealHint,
@@ -164,14 +165,14 @@ class _Header extends StatelessWidget {
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Lỗi: ${state.mistakes}  |  Gợi ý: ${state.hintsUsed}',
-                        style: const TextStyle(
-                          color: Color(0xFF64748B),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 14,
+                        runSpacing: 8,
+                        children: [
+                          _HeartCounter(label: 'Lỗi', used: state.mistakes),
+                          _HeartCounter(label: 'Gợi ý', used: state.hintsUsed),
+                        ],
                       ),
                     ],
                   ),
@@ -186,6 +187,42 @@ class _Header extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _HeartCounter extends StatelessWidget {
+  const _HeartCounter({required this.label, required this.used});
+
+  final String label;
+  final int used;
+
+  @override
+  Widget build(BuildContext context) {
+    final usedClamped = used.clamp(0, 3).toInt();
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '$label:',
+          style: const TextStyle(
+            color: Color(0xFF64748B),
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(width: 4),
+        for (var index = 0; index < 3; index++)
+          Opacity(
+            opacity: index < usedClamped ? 0.22 : 1,
+            child: const Icon(
+              Icons.favorite_rounded,
+              size: 16,
+              color: Color(0xFF7C3AED),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -312,12 +349,14 @@ class _SudokuCell extends StatelessWidget {
 class _NumberPad extends StatelessWidget {
   const _NumberPad({
     required this.enabled,
+    required this.hintEnabled,
     required this.onNumberTap,
     required this.onClear,
     required this.onHint,
   });
 
   final bool enabled;
+  final bool hintEnabled;
   final ValueChanged<int> onNumberTap;
   final VoidCallback onClear;
   final VoidCallback onHint;
@@ -368,7 +407,7 @@ class _NumberPad extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: enabled ? onHint : null,
+                onPressed: hintEnabled ? onHint : null,
                 icon: const Icon(Icons.lightbulb_outline_rounded),
                 label: const Text('Gợi ý'),
               ),

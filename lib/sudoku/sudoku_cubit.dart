@@ -83,6 +83,11 @@ class SudokuCubit extends Cubit<SudokuState> {
       return;
     }
 
+    if (state.hintsUsed >= 3) {
+      emit(state.copyWith(message: 'Bạn đã dùng hết gợi ý'));
+      return;
+    }
+
     final item = state.list[row][column];
     if (item.isFixed || item.data == item.answer) return;
 
