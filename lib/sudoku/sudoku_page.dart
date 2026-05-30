@@ -219,7 +219,7 @@ class _HeartCounter extends StatelessWidget {
             child: const Icon(
               Icons.favorite_rounded,
               size: 16,
-              color: Color(0xFF7C3AED),
+              color: Colors.red,
             ),
           ),
       ],
@@ -240,6 +240,16 @@ class _SudokuBoard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final selectedItem =
+        state.selectedRow == null ||
+            state.selectedColumn == null ||
+            state.list.isEmpty
+        ? null
+        : state.list[state.selectedRow!][state.selectedColumn!];
+    final selectedNumber = selectedItem != null && selectedItem.isCorrect
+        ? selectedItem.data
+        : 0;
+
     return AspectRatio(
       aspectRatio: 1,
       child: Container(
@@ -263,6 +273,10 @@ class _SudokuBoard extends StatelessWidget {
 
             final selected =
                 state.selectedRow == row && state.selectedColumn == column;
+            final sameNumber =
+                selectedNumber != 0 &&
+                item.isCorrect &&
+                item.data == selectedNumber;
             final sameArea =
                 state.selectedRow == row ||
                 state.selectedColumn == column ||
@@ -275,7 +289,7 @@ class _SudokuBoard extends StatelessWidget {
 
             return _SudokuCell(
               item: item,
-              selected: selected,
+              selected: selected || sameNumber,
               highlighted: sameArea,
               onTap: enabled ? () => onCellTap(item) : null,
             );
