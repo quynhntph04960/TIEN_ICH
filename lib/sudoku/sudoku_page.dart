@@ -4,6 +4,8 @@ import 'package:demo2/sudoku/sudoku_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'popup/sudoku_dialog.dart';
+
 class SudokuPage extends StatefulWidget {
   const SudokuPage({super.key});
 
@@ -13,6 +15,8 @@ class SudokuPage extends StatefulWidget {
 
 class _SudokuPageState extends State<SudokuPage> {
   final _cubit = SudokuCubit();
+  bool _lossDialogShown = false;
+  bool _winDialogShown = false;
 
   @override
   void initState() {
@@ -28,9 +32,41 @@ class _SudokuPageState extends State<SudokuPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<SudokuCubit, SudokuState>(
+    return BlocConsumer<SudokuCubit, SudokuState>(
       bloc: _cubit,
+      listener: (context, state) {
+        if (!state.isCompleted) {
+          _winDialogShown = false;
+        }
+
+        if (!state.isGameOver) {
+          _lossDialogShown = false;
+        }
+
+        if (state.isCompleted && !_winDialogShown) {
+          _winDialogShown = true;
+          showGameWinDialog(
+            context,
+            callWinGame: () {
+              _cubit.newGame();
+            },
+          );
+          return;
+        }
+
+        if (state.isGameOver && !_lossDialogShown) {
+          _lossDialogShown = true;
+          showGameOverDialog(
+            context,
+            callEndGame: () {
+              _cubit.newGame();
+            },
+          );
+        }
+      },
       builder: (context, state) {
+        final canPlay = !state.isGameOver && !state.isCompleted;
+
         return Scaffold(
           appBar: AppBar(title: const Text('Sudoku')),
           body: SafeArea(
@@ -44,6 +80,7 @@ class _SudokuPageState extends State<SudokuPage> {
                     constraints: const BoxConstraints(maxWidth: 460),
                     child: _SudokuBoard(
                       state: state,
+                      enabled: canPlay,
                       onCellTap: _cubit.selectCell,
                     ),
                   ),
@@ -53,6 +90,7 @@ class _SudokuPageState extends State<SudokuPage> {
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 460),
                     child: _NumberPad(
+                      enabled: canPlay,
                       onNumberTap: _cubit.inputNumber,
                       onClear: _cubit.clearSelectedCell,
                       onHint: _cubit.revealHint,
@@ -153,9 +191,14 @@ class _Header extends StatelessWidget {
 }
 
 class _SudokuBoard extends StatelessWidget {
-  const _SudokuBoard({required this.state, required this.onCellTap});
+  const _SudokuBoard({
+    required this.state,
+    required this.enabled,
+    required this.onCellTap,
+  });
 
   final SudokuState state;
+  final bool enabled;
   final ValueChanged<SudokuItem> onCellTap;
 
   @override
@@ -197,7 +240,7 @@ class _SudokuBoard extends StatelessWidget {
               item: item,
               selected: selected,
               highlighted: sameArea,
-              onTap: () => onCellTap(item),
+              onTap: enabled ? () => onCellTap(item) : null,
             );
           },
         ),
@@ -222,7 +265,7 @@ class _SudokuCell extends StatelessWidget {
   final SudokuItem item;
   final bool selected;
   final bool highlighted;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -268,11 +311,13 @@ class _SudokuCell extends StatelessWidget {
 
 class _NumberPad extends StatelessWidget {
   const _NumberPad({
+    required this.enabled,
     required this.onNumberTap,
     required this.onClear,
     required this.onHint,
   });
 
+  final bool enabled;
   final ValueChanged<int> onNumberTap;
   final VoidCallback onClear;
   final VoidCallback onHint;
@@ -293,7 +338,7 @@ class _NumberPad extends StatelessWidget {
           itemBuilder: (context, index) {
             final number = index + 1;
             return FilledButton(
-              onPressed: () => onNumberTap(number),
+              onPressed: enabled ? () => onNumberTap(number) : null,
               style: FilledButton.styleFrom(
                 padding: EdgeInsets.zero,
                 shape: RoundedRectangleBorder(
@@ -315,7 +360,7 @@ class _NumberPad extends StatelessWidget {
           children: [
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: onClear,
+                onPressed: enabled ? onClear : null,
                 icon: const Icon(Icons.backspace_outlined),
                 label: const Text('Xoá'),
               ),
@@ -323,7 +368,7 @@ class _NumberPad extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: onHint,
+                onPressed: enabled ? onHint : null,
                 icon: const Icon(Icons.lightbulb_outline_rounded),
                 label: const Text('Gợi ý'),
               ),

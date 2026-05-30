@@ -27,6 +27,8 @@ class SudokuCubit extends Cubit<SudokuState> {
   }
 
   void selectCell(SudokuItem item) {
+    if (state.isCompleted || state.isGameOver) return;
+
     emit(
       state.copyWith(
         selectedRow: item.row,
@@ -39,7 +41,12 @@ class SudokuCubit extends Cubit<SudokuState> {
   void inputNumber(int number) {
     final row = state.selectedRow;
     final column = state.selectedColumn;
-    if (row == null || column == null || state.isCompleted) return;
+    if (row == null ||
+        column == null ||
+        state.isCompleted ||
+        state.isGameOver) {
+      return;
+    }
 
     final item = state.list[row][column];
     if (item.isFixed) {
@@ -53,7 +60,12 @@ class SudokuCubit extends Cubit<SudokuState> {
   void clearSelectedCell() {
     final row = state.selectedRow;
     final column = state.selectedColumn;
-    if (row == null || column == null || state.isCompleted) return;
+    if (row == null ||
+        column == null ||
+        state.isCompleted ||
+        state.isGameOver) {
+      return;
+    }
 
     final item = state.list[row][column];
     if (item.isFixed) return;
@@ -64,7 +76,12 @@ class SudokuCubit extends Cubit<SudokuState> {
   void revealHint() {
     final row = state.selectedRow;
     final column = state.selectedColumn;
-    if (row == null || column == null || state.isCompleted) return;
+    if (row == null ||
+        column == null ||
+        state.isCompleted ||
+        state.isGameOver) {
+      return;
+    }
 
     final item = state.list[row][column];
     if (item.isFixed || item.data == item.answer) return;
@@ -87,14 +104,19 @@ class SudokuCubit extends Cubit<SudokuState> {
     final updated = _copyBoard();
     updated[row][column] = item.copyWith(data: number, isError: hasError);
     final completed = _isBoardCompleted(updated);
+    final mistakes = hasError ? state.mistakes + 1 : state.mistakes;
+    final isGameOver = mistakes >= 3 && !completed;
 
     emit(
       state.copyWith(
         list: updated,
-        mistakes: hasError ? state.mistakes + 1 : state.mistakes,
+        mistakes: mistakes,
         isCompleted: completed,
+        isGameOver: isGameOver,
         message: completed
             ? 'Hoàn thành Sudoku'
+            : isGameOver
+            ? 'Bạn đã thua'
             : hasError
             ? 'Số này chưa đúng'
             : '',

@@ -7,6 +7,7 @@ class SudokuState {
   final int mistakes;
   final int hintsUsed;
   final bool isCompleted;
+  final bool isGameOver;
   final String message;
 
   const SudokuState({
@@ -16,6 +17,7 @@ class SudokuState {
     this.mistakes = 0,
     this.hintsUsed = 0,
     this.isCompleted = false,
+    this.isGameOver = false,
     this.message = '',
   });
 
@@ -27,6 +29,7 @@ class SudokuState {
     int? mistakes,
     int? hintsUsed,
     bool? isCompleted,
+    bool? isGameOver,
     String? message,
   }) {
     return SudokuState(
@@ -38,6 +41,7 @@ class SudokuState {
       mistakes: mistakes ?? this.mistakes,
       hintsUsed: hintsUsed ?? this.hintsUsed,
       isCompleted: isCompleted ?? this.isCompleted,
+      isGameOver: isGameOver ?? this.isGameOver,
       message: message ?? this.message,
     );
   }
