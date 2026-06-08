@@ -69,54 +69,53 @@ class _SudokuPageState extends State<SudokuPage> {
 
         return Scaffold(
           appBar: AppBar(title: const Text('Sudoku')),
-          body: SafeArea(
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                _Header(state: state, onNewGame: _cubit.newGame),
-                const SizedBox(height: 16),
-                Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 460),
-                    child: _SudokuBoard(
-                      state: state,
-                      enabled: canPlay,
-                      onCellTap: _cubit.selectCell,
-                    ),
+          body: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              _Header(state: state, onNewGame: _cubit.newGame),
+              const SizedBox(height: 16),
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 460),
+                  child: _SudokuBoard(
+                    state: state,
+                    enabled: canPlay,
+                    onCellTap: _cubit.selectCell,
                   ),
                 ),
-                const SizedBox(height: 16),
-                Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 460),
-                    child: _NumberPad(
-                      enabled: canPlay,
-                      hintEnabled: canPlay && state.hintsUsed < 3,
-                      onNumberTap: _cubit.inputNumber,
-                      onClear: _cubit.clearSelectedCell,
-                      onHint: _cubit.revealHint,
-                    ),
+              ),
+              const SizedBox(height: 16),
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 460),
+                  child: _NumberPad(
+                    state: state,
+                    enabled: canPlay,
+                    hintEnabled: canPlay && state.hintsUsed < 3,
+                    onNumberTap: _cubit.inputNumber,
+                    onClear: _cubit.clearSelectedCell,
+                    onHint: _cubit.revealHint,
                   ),
                 ),
-                const SizedBox(height: 16),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  child: state.message.isEmpty
-                      ? const SizedBox(height: 22)
-                      : Text(
-                          state.message,
-                          key: ValueKey(state.message),
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: state.isCompleted
-                                ? const Color(0xFF0F766E)
-                                : const Color(0xFF64748B),
-                            fontWeight: FontWeight.w700,
-                          ),
+              ),
+              const SizedBox(height: 16),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: state.message.isEmpty
+                    ? const SizedBox(height: 22)
+                    : Text(
+                        state.message,
+                        key: ValueKey(state.message),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: state.isCompleted
+                              ? const Color(0xFF0F766E)
+                              : const Color(0xFF64748B),
+                          fontWeight: FontWeight.w700,
                         ),
-                ),
-              ],
-            ),
+                      ),
+              ),
+            ],
           ),
         );
       },
@@ -362,6 +361,7 @@ class _SudokuCell extends StatelessWidget {
 
 class _NumberPad extends StatelessWidget {
   const _NumberPad({
+    required this.state,
     required this.enabled,
     required this.hintEnabled,
     required this.onNumberTap,
@@ -369,6 +369,7 @@ class _NumberPad extends StatelessWidget {
     required this.onHint,
   });
 
+  final SudokuState state;
   final bool enabled;
   final bool hintEnabled;
   final ValueChanged<int> onNumberTap;
@@ -390,6 +391,9 @@ class _NumberPad extends StatelessWidget {
           itemCount: 9,
           itemBuilder: (context, index) {
             final number = index + 1;
+            final remaining = _remainingCount(number);
+            if (remaining == 0) return const SizedBox.shrink();
+
             return FilledButton(
               onPressed: enabled ? () => onNumberTap(number) : null,
               style: FilledButton.styleFrom(
@@ -398,12 +402,27 @@ class _NumberPad extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: Text(
-                '$number',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '$number',
+                    style: const TextStyle(
+                      fontSize: 17,
+                      height: 1,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'x$remaining',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      height: 1,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
             );
           },
@@ -430,5 +449,17 @@ class _NumberPad extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  int _remainingCount(int number) {
+    var visibleCorrectCount = 0;
+    for (final row in state.list) {
+      for (final item in row) {
+        if (item.data == number && item.isCorrect) {
+          visibleCorrectCount++;
+        }
+      }
+    }
+    return (9 - visibleCorrectCount).clamp(0, 9).toInt();
   }
 }

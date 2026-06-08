@@ -24,20 +24,20 @@ class _MoneySharePageState extends State<MoneySharePage> {
       create: (_) => _cubit,
       child: Scaffold(
         appBar: AppBar(
-          leading: IconButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) {
-                    return const ListGroupPage();
-                  },
-                ),
-              );
-            },
-            icon: const Icon(Icons.list),
-          ),
-          title: const Text("Chia tien"),
+          title: const Text("Chia tiền"),
           actions: [
+            IconButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) {
+                      return const ListGroupPage();
+                    },
+                  ),
+                );
+              },
+              icon: const Icon(Icons.list),
+            ),
             IconButton(
               onPressed: () async {
                 final result = await AddGroupHivePopup.showPopup(context);

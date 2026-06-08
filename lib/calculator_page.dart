@@ -30,7 +30,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
 
     if (first == null || second == null) {
       setState(() {
-        _error = "Vui long nhap 2 so hop le.";
+        _error = "Vui lòng nhập 2 số hợp lệ.";
       });
       return;
     }
@@ -45,7 +45,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
     } else if (operation == "/") {
       if (second == 0) {
         setState(() {
-          _error = "Khong the chia cho 0.";
+          _error = "Không thể chia cho 0.";
         });
         return;
       }
@@ -63,12 +63,12 @@ class _CalculatorPageState extends State<CalculatorPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("May tinh")),
+      appBar: AppBar(title: const Text("Máy tính")),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           const Text(
-            "Nhap 2 so va chon phep tinh",
+            "Nhập 2 số cho phép tính",
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
@@ -80,7 +80,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
             controller: _firstController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: const InputDecoration(
-              labelText: "So thu nhat",
+              labelText: "Số thứ nhất",
               prefixIcon: Icon(Icons.looks_one_rounded),
             ),
           ),
@@ -89,7 +89,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
             controller: _secondController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: const InputDecoration(
-              labelText: "So thu hai",
+              labelText: "Số thứ hai",
               prefixIcon: Icon(Icons.looks_two_rounded),
             ),
           ),
@@ -116,7 +116,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  "Ket qua",
+                  "Kết quả",
                   style: TextStyle(
                     color: Color(0xFF64748B),
                     fontSize: 13,

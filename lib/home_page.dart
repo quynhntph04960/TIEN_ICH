@@ -10,24 +10,19 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Trang chu")),
+      appBar: AppBar(title: const Text("Trang chủ")),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              "Chon module",
+              "Chọn tính năng",
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
                 color: Color(0xFF0F172A),
               ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              "Quan ly chia tien va dung may tinh nhanh.",
-              style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
             ),
             const SizedBox(height: 16),
             Expanded(
@@ -50,8 +45,8 @@ class HomePage extends StatelessWidget {
                     },
                   ),
                   _ModuleCard(
-                    title: "Chia tien",
-                    subtitle: "Nhap khoan chi/thu theo thanh vien",
+                    title: "Chia tiền",
+                    subtitle: "Nhập khoản chi/thu theo thành viên",
                     icon: Icons.paid_rounded,
                     iconColor: const Color(0xFF2563EB),
                     iconBackground: const Color(0xFFDBEAFE),
@@ -64,8 +59,8 @@ class HomePage extends StatelessWidget {
                     },
                   ),
                   _ModuleCard(
-                    title: "Danh sach nhom",
-                    subtitle: "Xem cac nhom da luu trong Hive",
+                    title: "Danh sách nhóm",
+                    subtitle: "Xem các nhóm đã lưu trong hive",
                     icon: Icons.groups_2_rounded,
                     iconColor: const Color(0xFF0F766E),
                     iconBackground: const Color(0xFFCCFBF1),
@@ -78,8 +73,8 @@ class HomePage extends StatelessWidget {
                     },
                   ),
                   _ModuleCard(
-                    title: "May tinh",
-                    subtitle: "Cong, tru, nhan, chia co ban",
+                    title: "Máy tính",
+                    subtitle: "Cộng, trừ, nhân, chia cơ bản",
                     icon: Icons.calculate_rounded,
                     iconColor: const Color(0xFF7C3AED),
                     iconBackground: const Color(0xFFEDE9FE),
