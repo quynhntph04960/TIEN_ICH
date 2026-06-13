@@ -1,6 +1,7 @@
 import 'package:demo2/calculator_page.dart';
 import 'package:demo2/money_share/money_share_page.dart';
 import 'package:demo2/money_share/page/list_group_page.dart';
+import 'package:demo2/pokemon/pokemon_page.dart';
 import 'package:demo2/sudoku/sudoku_page.dart';
 import 'package:flutter/material.dart';
 
@@ -32,6 +33,18 @@ class HomePage extends StatelessWidget {
                 mainAxisSpacing: 12,
                 childAspectRatio: 1.05,
                 children: [
+                  _ModuleCard(
+                    title: "Pokemon",
+                    subtitle: "Nối cặp Pokemon cổ điển",
+                    icon: Icons.catching_pokemon_rounded,
+                    iconColor: const Color(0xFFEA580C),
+                    iconBackground: const Color(0xFFFFEDD5),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const PokemonPage()),
+                      );
+                    },
+                  ),
                   _ModuleCard(
                     title: "Sudoku",
                     subtitle: "Game Sudoku",
