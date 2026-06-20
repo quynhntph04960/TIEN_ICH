@@ -6,11 +6,13 @@ class PokemonState {
   final Set<String> hintedKeys;
   final List<PokemonConnectionPoint> connectionPath;
   final int score;
-  final int moves;
   final int hintsLeft;
   final int shufflesLeft;
   final int currentLevel;
+  final int totalSeconds;
+  final int remainingSeconds;
   final bool isCompleted;
+  final bool isTimeOver;
   final String message;
 
   const PokemonState({
@@ -19,11 +21,13 @@ class PokemonState {
     this.hintedKeys = const {},
     this.connectionPath = const [],
     this.score = 0,
-    this.moves = 0,
     this.hintsLeft = 3,
     this.shufflesLeft = 3,
     this.currentLevel = 1,
+    this.totalSeconds = 600,
+    this.remainingSeconds = 600,
     this.isCompleted = false,
+    this.isTimeOver = false,
     this.message = '',
   });
 
@@ -39,7 +43,10 @@ class PokemonState {
     int? hintsLeft,
     int? shufflesLeft,
     int? currentLevel,
+    int? totalSeconds,
+    int? remainingSeconds,
     bool? isCompleted,
+    bool? isTimeOver,
     String? message,
   }) {
     return PokemonState(
@@ -50,11 +57,13 @@ class PokemonState {
           ? const []
           : connectionPath ?? this.connectionPath,
       score: score ?? this.score,
-      moves: moves ?? this.moves,
       hintsLeft: hintsLeft ?? this.hintsLeft,
       shufflesLeft: shufflesLeft ?? this.shufflesLeft,
       currentLevel: currentLevel ?? this.currentLevel,
+      totalSeconds: totalSeconds ?? this.totalSeconds,
+      remainingSeconds: remainingSeconds ?? this.remainingSeconds,
       isCompleted: isCompleted ?? this.isCompleted,
+      isTimeOver: isTimeOver ?? this.isTimeOver,
       message: message ?? this.message,
     );
   }

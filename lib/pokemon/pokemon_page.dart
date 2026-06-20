@@ -14,6 +14,7 @@ class PokemonPage extends StatefulWidget {
 class _PokemonPageState extends State<PokemonPage> {
   final _cubit = PokemonCubit();
   bool _winDialogShown = false;
+  bool _timeOverDialogShown = false;
 
   @override
   void initState() {
@@ -36,6 +37,10 @@ class _PokemonPageState extends State<PokemonPage> {
           _winDialogShown = false;
         }
 
+        if (!state.isTimeOver) {
+          _timeOverDialogShown = false;
+        }
+
         if (state.isCompleted && !_winDialogShown) {
           _winDialogShown = true;
           final isFinalLevel = state.currentLevel >= PokemonCubit.levelCount;
@@ -48,7 +53,7 @@ class _PokemonPageState extends State<PokemonPage> {
                 content: Text(
                   isFinalLevel
                       ? 'Bạn đã phá đảo Pokemon cổ điển. Xác nhận để quay về cấp 1.'
-                      : 'Bạn đã thắng cấp ${state.currentLevel} với ${state.moves} lượt. Xác nhận để sang cấp ${state.currentLevel + 1}.',
+                      : 'Bạn đã thắng cấp ${state.currentLevel}. Xác nhận để sang cấp ${state.currentLevel + 1}.',
                 ),
                 actions: [
                   FilledButton(
@@ -61,6 +66,31 @@ class _PokemonPageState extends State<PokemonPage> {
                           ? 'Về cấp 1'
                           : 'Sang cấp ${state.currentLevel + 1}',
                     ),
+                  ),
+                ],
+              );
+            },
+          );
+        }
+
+        if (state.isTimeOver && !_timeOverDialogShown) {
+          _timeOverDialogShown = true;
+          showDialog<void>(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) {
+              return AlertDialog(
+                title: const Text('Hết giờ rồi'),
+                content: Text(
+                  'Bạn chưa hoàn thành cấp ${state.currentLevel}. Xác nhận để chơi lại cấp này.',
+                ),
+                actions: [
+                  FilledButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      _cubit.newGame();
+                    },
+                    child: const Text('Chơi lại'),
                   ),
                 ],
               );
@@ -155,7 +185,6 @@ class _Header extends StatelessWidget {
                         runSpacing: 8,
                         children: [
                           _Stat(label: 'Điểm', value: '${state.score}'),
-                          _Stat(label: 'Lượt', value: '${state.moves}'),
                           _Stat(label: 'Cấp', value: '${state.currentLevel}'),
                           _Stat(label: 'Gợi ý', value: '${state.hintsLeft}'),
                           _Stat(label: 'Xáo', value: '${state.shufflesLeft}'),
@@ -164,6 +193,8 @@ class _Header extends StatelessWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: 12),
+                _TimeBar(state: state),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -176,13 +207,17 @@ class _Header extends StatelessWidget {
                     ),
                     const SizedBox(width: 10),
                     IconButton.filledTonal(
-                      onPressed: state.hintsLeft > 0 ? onHint : null,
+                      onPressed: !state.isTimeOver && state.hintsLeft > 0
+                          ? onHint
+                          : null,
                       tooltip: 'Gợi ý',
                       icon: const Icon(Icons.lightbulb_rounded),
                     ),
                     const SizedBox(width: 8),
                     IconButton.filledTonal(
-                      onPressed: state.shufflesLeft > 0 ? onShuffle : null,
+                      onPressed: !state.isTimeOver && state.shufflesLeft > 0
+                          ? onShuffle
+                          : null,
                       tooltip: 'Xáo bàn',
                       icon: const Icon(Icons.shuffle_rounded),
                     ),
@@ -209,6 +244,75 @@ class _Header extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _TimeBar extends StatelessWidget {
+  const _TimeBar({required this.state});
+
+  final PokemonState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final totalSeconds = state.totalSeconds == 0 ? 1 : state.totalSeconds;
+    final progress = (state.remainingSeconds / totalSeconds).clamp(0.0, 1.0);
+    final isLowTime = state.remainingSeconds <= 60;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Row(
+        //   children: [
+        //     Icon(
+        //       Icons.timer_outlined,
+        //       size: 18,
+        //       color: isLowTime
+        //           ? const Color(0xFFDC2626)
+        //           : const Color(0xFF2563EB),
+        //     ),
+        //     const SizedBox(width: 6),
+        //     const Text(
+        //       'Thời gian',
+        //       style: TextStyle(
+        //         color: Color(0xFF64748B),
+        //         fontSize: 12,
+        //         fontWeight: FontWeight.w700,
+        //       ),
+        //     ),
+        //     const Spacer(),
+        //     Text(
+        //       _formatTime(state.remainingSeconds),
+        //       style: TextStyle(
+        //         color: isLowTime
+        //             ? const Color(0xFFDC2626)
+        //             : const Color(0xFF0F172A),
+        //         fontSize: 13,
+        //         fontWeight: FontWeight.w900,
+        //       ),
+        //     ),
+        //   ],
+        // ),
+        // const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: LinearProgressIndicator(
+            value: progress,
+            minHeight: 9,
+            backgroundColor: const Color(0xFFE2E8F0),
+            valueColor: AlwaysStoppedAnimation<Color>(
+              isLowTime ? const Color(0xFFDC2626) : const Color(0xFF2563EB),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatTime(int totalSeconds) {
+    final clampedSeconds = totalSeconds < 0 ? 0 : totalSeconds;
+    final minutes = clampedSeconds ~/ 60;
+    final seconds = clampedSeconds % 60;
+    return '$minutes:${seconds.toString().padLeft(2, '0')}';
   }
 }
 

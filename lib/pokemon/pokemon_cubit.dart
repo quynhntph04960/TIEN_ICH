@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:collection';
 import 'dart:math';
 
@@ -12,8 +13,10 @@ class PokemonCubit extends Cubit<PokemonState> {
   static const int columns = 16;
   static const int pokemonKinds = 36;
   static const int levelCount = 9;
+  static const int gameSeconds = 600;
 
   final Random _random = Random();
+  Timer? _timer;
   int _animationId = 0;
 
   void initialize() {
@@ -21,35 +24,70 @@ class PokemonCubit extends Cubit<PokemonState> {
   }
 
   void newGame() {
-    _animationId++;
-    final level = state.currentLevel;
-    emit(
-      PokemonState(
-        board: _createBoard(),
-        currentLevel: level,
-        message: '${_levelName(level)} đã sẵn sàng',
-      ),
-    );
+    _startGameAtLevel(state.currentLevel);
   }
 
   void continueAfterWin() {
     if (!state.isCompleted) return;
 
-    _animationId++;
     final nextLevel = state.currentLevel >= levelCount
         ? 1
         : state.currentLevel + 1;
+    _startGameAtLevel(nextLevel);
+  }
+
+  @override
+  Future<void> close() {
+    _timer?.cancel();
+    return super.close();
+  }
+
+  void _startGameAtLevel(int level) {
+    _animationId++;
+    _timer?.cancel();
     emit(
       PokemonState(
         board: _createBoard(),
-        currentLevel: nextLevel,
-        message: '${_levelName(nextLevel)} đã sẵn sàng',
+        currentLevel: level,
+        totalSeconds: gameSeconds,
+        remainingSeconds: gameSeconds,
+        message: '${_levelName(level)} đã sẵn sàng',
       ),
     );
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (isClosed || state.isCompleted || state.isTimeOver) {
+        _timer?.cancel();
+        return;
+      }
+
+      final remainingSeconds = state.remainingSeconds - 1;
+      if (remainingSeconds <= 0) {
+        _animationId++;
+        _timer?.cancel();
+        emit(
+          state.copyWith(
+            remainingSeconds: 0,
+            isTimeOver: true,
+            clearSelected: true,
+            clearConnectionPath: true,
+            hintedKeys: const {},
+            message: 'Hết giờ rồi',
+          ),
+        );
+        return;
+      }
+
+      emit(state.copyWith(remainingSeconds: remainingSeconds));
+    });
   }
 
   Future<void> selectTile(PokemonTile tile) async {
     if (state.isCompleted ||
+        state.isTimeOver ||
         tile.isRemoved ||
         state.connectionPath.isNotEmpty) {
       return;
@@ -77,7 +115,6 @@ class PokemonCubit extends Cubit<PokemonState> {
         state.copyWith(
           selectedTile: tile,
           hintedKeys: const {},
-          moves: state.moves + 1,
           message: 'Hai Pokemon chưa giống nhau',
         ),
       );
@@ -90,7 +127,6 @@ class PokemonCubit extends Cubit<PokemonState> {
         state.copyWith(
           selectedTile: tile,
           hintedKeys: const {},
-          moves: state.moves + 1,
           message: 'Đường nối bị chặn',
         ),
       );
@@ -103,7 +139,6 @@ class PokemonCubit extends Cubit<PokemonState> {
         clearSelected: true,
         hintedKeys: const {},
         connectionPath: _toConnectionPath(path),
-        moves: state.moves + 1,
         message: 'Đã nối đúng cặp!',
       ),
     );
@@ -116,6 +151,7 @@ class PokemonCubit extends Cubit<PokemonState> {
     final completed = _isCompleted(leveled);
     final needsShuffle = !completed && _findConnectablePair(leveled) == null;
     final nextBoard = needsShuffle ? _shuffleRemaining(leveled) : leveled;
+    if (completed) _timer?.cancel();
 
     emit(
       state.copyWith(
@@ -136,6 +172,7 @@ class PokemonCubit extends Cubit<PokemonState> {
 
   void revealHint() {
     if (state.isCompleted ||
+        state.isTimeOver ||
         state.connectionPath.isNotEmpty ||
         state.hintsLeft <= 0) {
       emit(state.copyWith(message: 'Bạn đã dùng hết gợi ý'));
@@ -159,7 +196,11 @@ class PokemonCubit extends Cubit<PokemonState> {
   }
 
   void shuffleBoard({bool force = false}) {
-    if (state.isCompleted || state.connectionPath.isNotEmpty) return;
+    if (state.isCompleted ||
+        state.isTimeOver ||
+        state.connectionPath.isNotEmpty) {
+      return;
+    }
     if (!force && state.shufflesLeft <= 0) {
       emit(state.copyWith(message: 'Bạn đã dùng hết lượt xáo'));
       return;
