@@ -38,21 +38,29 @@ class _PokemonPageState extends State<PokemonPage> {
 
         if (state.isCompleted && !_winDialogShown) {
           _winDialogShown = true;
+          final isFinalLevel = state.currentLevel >= PokemonCubit.levelCount;
           showDialog<void>(
             context: context,
+            barrierDismissible: false,
             builder: (context) {
               return AlertDialog(
-                title: const Text('Thắng rồi!'),
+                title: Text(isFinalLevel ? 'Phá đảo rồi!' : 'Thắng rồi!'),
                 content: Text(
-                  'Bạn đã phá đảo bàn Pokemon với ${state.moves} lượt.',
+                  isFinalLevel
+                      ? 'Bạn đã phá đảo Pokemon cổ điển. Xác nhận để quay về cấp 1.'
+                      : 'Bạn đã thắng cấp ${state.currentLevel} với ${state.moves} lượt. Xác nhận để sang cấp ${state.currentLevel + 1}.',
                 ),
                 actions: [
-                  TextButton(
+                  FilledButton(
                     onPressed: () {
                       Navigator.of(context).pop();
-                      _cubit.newGame();
+                      _cubit.continueAfterWin();
                     },
-                    child: const Text('Chơi tiếp'),
+                    child: Text(
+                      isFinalLevel
+                          ? 'Về cấp 1'
+                          : 'Sang cấp ${state.currentLevel + 1}',
+                    ),
                   ),
                 ],
               );
@@ -71,7 +79,6 @@ class _PokemonPageState extends State<PokemonPage> {
                 onNewGame: _cubit.newGame,
                 onHint: _cubit.revealHint,
                 onShuffle: _cubit.shuffleBoard,
-                onLevelChanged: _cubit.changeLevel,
               ),
               const SizedBox(height: 16),
               Center(
@@ -110,14 +117,12 @@ class _Header extends StatelessWidget {
     required this.onNewGame,
     required this.onHint,
     required this.onShuffle,
-    required this.onLevelChanged,
   });
 
   final PokemonState state;
   final VoidCallback onNewGame;
   final VoidCallback onHint;
   final VoidCallback onShuffle;
-  final ValueChanged<int> onLevelChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -183,66 +188,12 @@ class _Header extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                _LevelSelector(
-                  currentLevel: state.currentLevel,
-                  enabled: state.connectionPath.isEmpty,
-                  onLevelChanged: onLevelChanged,
-                ),
               ],
             ),
           ),
         ),
       ),
     );
-  }
-}
-
-class _LevelSelector extends StatelessWidget {
-  const _LevelSelector({
-    required this.currentLevel,
-    required this.enabled,
-    required this.onLevelChanged,
-  });
-
-  final int currentLevel;
-  final bool enabled;
-  final ValueChanged<int> onLevelChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          for (var level = 1; level <= PokemonCubit.levelCount; level++) ...[
-            ChoiceChip(
-              label: Text('C$level'),
-              selected: currentLevel == level,
-              onSelected: enabled ? (_) => onLevelChanged(level) : null,
-              tooltip: _levelTooltip(level),
-              visualDensity: VisualDensity.compact,
-            ),
-            if (level < PokemonCubit.levelCount) const SizedBox(width: 8),
-          ],
-        ],
-      ),
-    );
-  }
-
-  String _levelTooltip(int level) {
-    return switch (level) {
-      1 => 'Giữ nguyên',
-      2 => 'Từ trên xuống',
-      3 => 'Từ dưới lên',
-      4 => 'Từ trái qua phải',
-      5 => 'Từ phải qua trái',
-      6 => 'Tập trung vào giữa',
-      7 => 'Tập trung ra ngoài',
-      8 => 'Dồn về hàng 5',
-      9 => 'Tách về hàng 1 và 9',
-      _ => 'Cấp $level',
-    };
   }
 }
 

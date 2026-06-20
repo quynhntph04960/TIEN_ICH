@@ -32,17 +32,18 @@ class PokemonCubit extends Cubit<PokemonState> {
     );
   }
 
-  void changeLevel(int level) {
-    if (level < 1 || level > levelCount || state.connectionPath.isNotEmpty) {
-      return;
-    }
+  void continueAfterWin() {
+    if (!state.isCompleted) return;
 
     _animationId++;
+    final nextLevel = state.currentLevel >= levelCount
+        ? 1
+        : state.currentLevel + 1;
     emit(
       PokemonState(
         board: _createBoard(),
-        currentLevel: level,
-        message: '${_levelName(level)} đã sẵn sàng',
+        currentLevel: nextLevel,
+        message: '${_levelName(nextLevel)} đã sẵn sàng',
       ),
     );
   }
